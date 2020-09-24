@@ -1,46 +1,72 @@
 
-import { useState } from 'react'
-
-export type FormValue = {
-    value: string,
-    name: string
-}
-
-type UseLogin = [
-    FormValue[],
-    boolean,
-    boolean,
-    boolean,
-    (e: React.ChangeEvent<HTMLInputElement>) => void,
-    () => void
-]
+import { useReducer, useState } from 'react'
+import { UseLogin, FormValue, LoginAction, FormState } from '../model/interface'
 
 const useLogin = (): UseLogin => {
 
-    const [values, setValues] = useState<FormValue[]>([])
-    const [errors, setErrors] = useState<boolean>(false)
-    const [loading, setLoading] = useState<boolean>(false)
-    const [loggedIn, setLoggedIn] = useState<boolean>(false)
+    const initialForm = [
+        { name: 'username', value: '', },
+        { name: 'password', value: '', }
+    ]
+
+    const initialState: FormState = {
+        errors: false,
+        loading: false,
+        loggedIn: false
+    }
+
+    const [values, setValues] = useState<FormValue[]>(initialForm)
+
+    function loginReducer(state: FormState, action: LoginAction){
+        switch (action.type) {
+            case 'login' : {
+                return {
+                    ...state,
+                    errors: false,
+                    loading: true,
+                }
+            }
+            case 'success': {
+                return {
+                    ...state,
+                    loading: false,
+                    loggedIn: true,
+                }
+            }
+            case 'error': {
+                return {
+                    ...state,
+                    errors: true,
+                    loggedIn: false,
+                    loading: false,
+                }
+            }
+            default: 
+            return state;
+        }
+    }
+
+    const [state, dispatch] = useReducer(loginReducer, initialState);
+    const { errors, loading, loggedIn } = state;
+
 
     const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        console.log('change')
-        setValues({...values, [e.target.name]:e.target.value})
-        return;
+        const forms = values.map(el => el.name === e.target.name ?
+            { name: e.target.name, value: e.target.value } : el)
+        setValues(forms)
     }
     
     const onSubmit =  () => {
-        const array = Object.values(values)
-        const ready = array[0] && array[1]
+        dispatch({type: 'login'})
+        const ready = values.every(el => el.value !== '')
         if(ready) 
         {
-            setErrors(false)
-            setLoading(true)
-            setTimeout(() => {setLoading(false); setLoggedIn(true);},1500)
-            setValues([])
+            dispatch({type: 'success'})
+            // setTimeout(() => {setLoading(false); setLoggedIn(true);},1500)
+            setValues(initialForm)
         }
         else{
-            console.log('no')
-            setErrors(true)
+            dispatch({type: 'error'})
         }
        return;
     }
