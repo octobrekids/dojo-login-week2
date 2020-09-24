@@ -11,7 +11,7 @@ const Login: React.FC = () => {
         loggedIn,
         onChange,
         onSubmit
-    ] = useLogin() as any;
+    ] = useLogin();
 
     return (
         <div>
